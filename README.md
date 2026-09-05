@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI Gym Coach
 
-## Getting Started
+A personal AI gym coach: onboarding → AI-generated weekly programs → live
+workout logging → progressive overload → weight & progress tracking → weekly
+check-ins → coach chat with photo and meal analysis. Trilingual (English,
+Arabic with full RTL, French).
 
-First, run the development server:
+## Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **Next.js 16** (App Router, Turbopack) + TypeScript strict + Tailwind v4 + shadcn/Radix
+- **Clerk** — authentication
+- **Neon Postgres** — data (`@neondatabase/serverless`); authorization lives in
+  the repository layer (`src/lib/db/session.ts`), every query filters by user id
+- **Neon Object Storage** — private progress/meal photos via presigned URLs
+- **Together AI** — program generation, coach chat, vision (models set by env)
+- **Zod** — every AI response and user input is parsed, never trusted
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Copy `.env.example` to `.env.local` and fill in Clerk, Neon, Together AI
+   and storage credentials.
+2. `npm install`
+3. `node --env-file=.env.local scripts/migrate.mjs` — apply SQL migrations
+4. `npm run seed:exercises` — seed the 1,332-exercise catalogue
+5. `npm run dev`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Commands
 
-## Learn More
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | dev server |
+| `npm run build` / `npm start` | production build / serve |
+| `npm run lint` / `npm run typecheck` | ESLint / `tsc --noEmit` |
+| `npm test` | Vitest (migrations run against in-memory Postgres) |
+| `npm run build:gif-map` | regenerate the exercise→GIF id map |
 
-To learn more about Next.js, take a look at the following resources:
+## Architecture notes
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See `ARCHITECTURE.md`, `DESIGN_SYSTEM.md` and `PHASES.md`. Two rules the code
+enforces everywhere: the AI can never invent an exercise (ids are validated
+against the catalogue), and all math (progression, stats, nutrition targets)
+is deterministic code — AI only explains and selects.
